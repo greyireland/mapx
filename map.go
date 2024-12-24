@@ -57,7 +57,6 @@ func (m *Map[V]) sync() {
 					log.Warn("set err", "err", err, "key", data.key, "val", string(buf))
 					continue
 				}
-				log.Info("set success", "key", data.key, "val", string(buf))
 			case OpDel:
 				err := m.db.Del([]byte(data.key))
 				if err != nil {
