@@ -44,13 +44,26 @@ func NewMapWithStore[V any](path string, s kv.Store) *Map[V] {
 func (m *Map[V]) sync() {
 	for {
 		select {
-		case item := <-m.ch:
-			switch item.op {
+		case data := <-m.ch:
+			switch data.op {
 			case OpSet:
-				buf, _ := json.Marshal(item.val)
-				m.db.Set([]byte(item.key), buf)
+				buf, err := json.Marshal(data.val)
+				if err != nil {
+					log.Warn("marshal err", "err", err, "val", data.val)
+					continue
+				}
+				err = m.db.Set([]byte(data.key), buf)
+				if err != nil {
+					log.Warn("set err", "err", err, "key", data.key, "val", string(buf))
+					continue
+				}
+				log.Info("set success", "key", data.key, "val", string(buf))
 			case OpDel:
-				m.db.Del([]byte(item.key))
+				err := m.db.Del([]byte(data.key))
+				if err != nil {
+					log.Warn("del err", "err", err, "key", data.key)
+				}
+
 			}
 		}
 	}

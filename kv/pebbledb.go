@@ -98,13 +98,13 @@ func (s *pebbleStore) Keys(pattern []byte, limit int, withvals bool) ([][]byte, 
 	it.SeekGE(pattern) //"" scan all keys
 
 	for ; it.Valid(); it.Next() {
-		key := it.Key()
+		k := it.Key()
+		key := make([]byte, len(k))
+		copy(key, k) //must copy key, because it will be reused in next iteration
 		if !bytes.HasPrefix(key, pattern) {
 			break
 		}
-
-		k := it.Key()
-		keys = append(keys, k)
+		keys = append(keys, key)
 
 		if withvals {
 			value := it.Value()
