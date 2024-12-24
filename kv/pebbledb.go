@@ -17,8 +17,8 @@ func MustNewPebbleStore(path string, fsync bool) Store {
 		panic(err)
 	}
 	return s
-
 }
+
 func NewPebbleStore(path string, fsync bool) (Store, error) {
 
 	opts := &pebble.Options{}
@@ -34,10 +34,11 @@ func NewPebbleStore(path string, fsync bool) (Store, error) {
 		return nil, err
 	}
 
-	return &pebbleStore{
+	s := &pebbleStore{
 		db: db,
 		wo: wo,
-	}, nil
+	}
+	return s, nil
 }
 
 func (s *pebbleStore) Close() error {
@@ -94,7 +95,7 @@ func (s *pebbleStore) Keys(pattern []byte, limit int, withvals bool) ([][]byte, 
 	io := &pebble.IterOptions{}
 	it, _ := s.db.NewIter(io)
 	defer it.Close()
-	it.SeekGE(pattern)
+	it.SeekGE(pattern) //"" scan all keys
 
 	for ; it.Valid(); it.Next() {
 		key := it.Key()

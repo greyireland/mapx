@@ -2,8 +2,10 @@ package mapx
 
 import (
 	"encoding/json"
+	"github.com/greyireland/log"
 	"github.com/greyireland/mapx/kv"
 	cmap "github.com/orcaman/concurrent-map/v2"
+	"time"
 )
 
 const (
@@ -12,21 +14,23 @@ const (
 )
 
 type Map[V any] struct {
-	c  cmap.ConcurrentMap[string, V]
-	s  kv.Store
-	ch chan item[V]
+	path string
+	c    cmap.ConcurrentMap[string, V]
+	db   kv.Store
+	ch   chan item[V]
 }
 
 func NewMap[V any](path string) *Map[V] {
-	return NewMapWithStore[V](kv.MustNewPebbleStore(path, true))
+	return NewMapWithStore[V](path, kv.MustNewPebbleStore(path, true))
 }
 
 // NewMapWithStore new map with store
-func NewMapWithStore[V any](s kv.Store) *Map[V] {
+func NewMapWithStore[V any](path string, s kv.Store) *Map[V] {
 	m := &Map[V]{
-		s:  s,
-		c:  cmap.New[V](),
-		ch: make(chan item[V], 10000),
+		path: path,
+		db:   s,
+		c:    cmap.New[V](),
+		ch:   make(chan item[V], 10000),
 	}
 	err := m.load()
 	if err != nil {
@@ -44,26 +48,30 @@ func (m *Map[V]) sync() {
 			switch item.op {
 			case OpSet:
 				buf, _ := json.Marshal(item.val)
-				m.s.Set([]byte(item.key), buf)
+				m.db.Set([]byte(item.key), buf)
 			case OpDel:
-				m.s.Del([]byte(item.key))
+				m.db.Del([]byte(item.key))
 			}
 		}
 	}
 }
 func (m *Map[V]) load() error {
-	keys, vals, err := m.s.Keys([]byte("*"), 0, true)
+	start := time.Now()
+	keys, vals, err := m.db.Keys([]byte(""), 0, true)
 	if err != nil {
+		log.Warn("load map err", "err", err, "path", m.path)
 		return err
 	}
 	for i := 0; i < len(keys); i++ {
 		var v V
 		err = json.Unmarshal(vals[i], &v)
 		if err != nil {
+			log.Warn("unmarshal err", "err", err, "key", string(keys[i]), "val", string(vals[i]))
 			continue
 		}
 		m.c.Set(string(keys[i]), v)
 	}
+	log.Info("load map", "path", m.path, "count", m.c.Count(), "time", time.Since(start))
 	return nil
 }
 func (m *Map[V]) Set(key string, value V) {
