@@ -108,3 +108,8 @@ func (m *Map[V]) Del(key string) {
 func (m *Map[V]) Count() int {
 	return m.c.Count()
 }
+
+// Items get all items
+func (m *Map[V]) Items() map[string]V {
+	return m.c.Items()
+}
