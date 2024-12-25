@@ -108,7 +108,9 @@ func (s *pebbleStore) Keys(pattern []byte, limit int, withvals bool) ([][]byte, 
 
 		if withvals {
 			value := it.Value()
-			vals = append(vals, value)
+			val := make([]byte, len(value))
+			copy(val, value)
+			vals = append(vals, val)
 		}
 	}
 
