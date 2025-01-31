@@ -14,37 +14,35 @@ const (
 )
 
 type SyncMap[V any] struct {
-	key     string
-	c       cmap.ConcurrentMap[string, V]
-	db      PubSubStore
-	ch      chan Item[V]
-	isWrite bool
+	key   string
+	c     cmap.ConcurrentMap[string, V]
+	db    PubSubStore
+	ch    chan Item[V]
+	isPub bool
 }
 
-func NewSyncMap[V any](db *redis.Client, key string, isWrite bool) *SyncMap[V] {
-	return NewSyncMapWithStore[V](MustNewRedisStore(db, key), key, isWrite)
+func NewSyncMap[V any](db *redis.Client, key string, isPub bool) *SyncMap[V] {
+	return NewSyncMapWithStore[V](MustNewRedisStore(db, key), key, isPub)
 
 }
 
-func NewSyncMapWithStore[V any](db PubSubStore, key string, isWrite bool) *SyncMap[V] {
+func NewSyncMapWithStore[V any](db PubSubStore, key string, isPub bool) *SyncMap[V] {
 	m := &SyncMap[V]{
-		key:     key,
-		db:      db,
-		c:       cmap.New[V](),
-		ch:      make(chan Item[V], 10000),
-		isWrite: isWrite,
+		key:   key,
+		db:    db,
+		c:     cmap.New[V](),
+		ch:    make(chan Item[V], 10000),
+		isPub: isPub,
 	}
-	if !isWrite {
+	if !isPub {
 		//subscribe
 		go m.handleSync()
-		err := m.load()
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		go m.fsync()
 	}
-
+	go m.fsync()
+	err := m.load()
+	if err != nil {
+		panic(err)
+	}
 	return m
 }
 
@@ -101,8 +99,8 @@ func (m *SyncMap[V]) fsync() {
 					log.Warn("del err", "err", err, "Key", data.Key)
 				}
 			}
-			//publish isWrite op
-			if m.isWrite {
+			//publish isPub op
+			if m.isPub {
 				item, err := json.Marshal(data)
 				if err != nil {
 					log.Warn("marshal err", "err", err, "Val", data.Val)
