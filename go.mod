@@ -6,6 +6,7 @@ require (
 	github.com/cockroachdb/pebble v1.1.2
 	github.com/greyireland/log v1.0.7
 	github.com/orcaman/concurrent-map/v2 v2.0.1
+	github.com/redis/go-redis/v9 v9.7.0
 )
 
 require (
@@ -17,6 +18,7 @@ require (
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect

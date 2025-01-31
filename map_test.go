@@ -1,6 +1,7 @@
 package mapx
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/greyireland/log"
 	"testing"
@@ -28,4 +29,14 @@ func TestNewKVMap(t *testing.T) {
 	//kv.db.FlushDB()
 
 	time.Sleep(time.Second * 3)
+}
+
+// test json marshal
+func TestMarshal(t *testing.T) {
+	d := "1"
+	b, _ := json.Marshal(d)
+	fmt.Println(string(b))
+	var d2 string
+	json.Unmarshal(b, &d2)
+	fmt.Println(d2)
 }
